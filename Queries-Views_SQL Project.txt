@@ -1,0 +1,228 @@
+Category 1: CRIME LOCATION  
+
+Q1. What types of crimes are committed in San Diego? 
+
+SELECT city, ibr_category, COUNT(*) AS crime_count 
+FROM Crime_Details 
+INNER JOIN Location 
+ON Crime_Details.objectid = Location.objectid 
+WHERE city= "SAN DIEGO" 
+GROUP BY city, ibr_category 
+ORDER BY crime_count DESC; 
+
+Q2. How many crimes have been reported in each division? 
+
+SELECT division, COUNT(*) AS crime_count 
+FROM Location 
+INNER JOIN Crime_Details 
+ON Location.objectid = Crime_Details.objectid 
+GROUP BY division; 
+
+Q3. Which zip codes in San Diego have the most crimes? 
+
+SELECT zip, COUNT(*) AS crime_count 
+FROM Location 
+INNER JOIN Crime_Details 
+ON Location.objectid = Crime_Details.objectid 
+WHERE city="SAN DIEGO" 
+GROUP BY zip 
+ORDER BY crime_count DESC; 
+
+Q 4. View: Crimes by Division and Neighborhood 
+
+CREATE VIEW Crimes_By_Division_Neighborhood AS 
+SELECT division, neighborhood, COUNT(*) AS crime_count 
+FROM Location 
+INNER JOIN Crime_Details 
+ON Location.objectid = Crime_Details.objectid 
+GROUP BY division, neighborhood; 
+
+
+CATEGORY 2: CRIME TYPES  
+
+Q1. What is the total number of violent crimes by type? 
+
+SELECT ibr_offense_description, COUNT(*) AS violent_crime_count 
+FROM Crime_Details 
+WHERE violent_crime = 1 
+GROUP BY ibr_offense_description; 
+
+Q2. How many property crimes have been reported by category? 
+
+SELECT ibr_category, COUNT(*) AS property_crime_count 
+FROM Crime_Details 
+WHERE property_crime = 1 
+GROUP BY ibr_category; 
+
+Q3. What are the most frequent types of crimes? 
+ 
+SELECT ibr_offense_description, COUNT(*) AS crime_count 
+FROM Crime_Details 
+GROUP BY ibr_offense_description 
+ORDER BY crime_count DESC; 
+
+Q4. View: Crime Frequency by Category 
+
+CREATE VIEW Crime_Frequency_By_Category AS 
+SELECT ibr_category, COUNT(*) AS crime_count 
+FROM Crime_Details 
+GROUP BY ibr_category; 
+
+
+Category 3: Temporal Statistics
+  
+Q1. Which days of the week have the most crimes?
+ 
+SELECT day_of_week, COUNT(*) AS crime_count 
+FROM Time_Info 
+GROUP BY day_of_week 
+ORDER BY crime_count DESC;
+
+Q2. How many crimes are committed each month in 2023 ? 
+
+SELECT month, COUNT(*) AS crime_count 
+FROM Time_Info 
+WHERE year = 2023 
+GROUP BY month 
+ORDER BY crime_count DESC; 
+
+Q3. How many crimes are committed each year? 
+
+SELECT year, COUNT(*) AS crime_count 
+FROM Time_Info 
+GROUP BY year; 
+
+Q4. View: Crimes by Year and Month for 2023
+ 
+CREATE VIEW Crimes_By_Year_Month AS 
+SELECT year, month, COUNT(*) AS crime_count 
+FROM Time_Info 
+WHERE year = 2023 
+GROUP BY year, month; 
+
+
+Category 4: Crimes by Neighborhood  
+
+Q1. What is the number of crimes in each neighborhood?
+ 
+SELECT neighborhood, COUNT(*) AS crime_count 
+FROM Location 
+INNER JOIN Crime_Details  
+ON Location.objectid = Crime_Details.objectid 
+GROUP BY neighborhood 
+ORDER BY crime_count DESC; 
+
+Q2. What are the violent crimes committed in each neighborhood? 
+
+SELECT Location.neighborhood, COUNT(*) AS violent_crime_count 
+FROM Crime_Details 
+INNER JOIN Location  
+ON Crime_Details.objectid = Location.objectid 
+WHERE Crime_Details.violent_crime = 1 
+GROUP BY Location.neighborhood 
+ORDER BY violent_crime_count DESC;
+
+Q3. Which neighborhoods are most affected by property crimes?
+ 
+SELECT neighborhood, COUNT(*) AS property_crime_count 
+FROM Location 
+INNER JOIN Crime_Details 
+ON Location.objectid = Crime_Details.objectid 
+WHERE property_crime = 1 
+GROUP BY neighborhood 
+ORDER BY property_crime_count DESC; 
+
+Q4. View: Crimes by  San Diego Neighborhood and Crime Type 
+
+CREATE VIEW Crimes_By_Neighborhood_Category AS 
+SELECT neighborhood, ibr_category, COUNT(*) AS crime_count 
+FROM Location 
+INNER JOIN Crime_Details 
+ON Location.objectid = Crime_Details.objectid 
+WHERE city = 'SAN DIEGO' 
+GROUP BY neighborhood, ibr_category 
+ORDER BY crime_count DESC; 
+
+
+Category 5: Administrative Crime Details 
+
+Q1. What is the number of crimes by legal code section? 
+
+SELECT code_section, COUNT(*) AS crime_count 
+FROM Administrative_Details 
+GROUP BY code_section 
+ORDER BY crime_count DESC; 
+
+Q2. What are the most frequent legal code sections in violent crimes? 
+
+SELECT code_section, COUNT(*) AS violent_crime_count 
+FROM Administrative_Details 
+INNER JOIN Crime_Details  
+ON Administrative_Details.objectid = Crime_Details.objectid 
+WHERE Crime_Details.violent_crime = 1 
+GROUP BY code_section 
+ORDER BY violent_crime_count DESC; 
+
+Q3. List of crimes with their administrative details (code section, NIBRS) 
+
+SELECT Crime_Details.case_number, Administrative_Details.code_section, 
+Administrative_Details.nibrs_uniq 
+FROM Crime_Details 
+INNER JOIN Administrative_Details 
+ON Crime_Details.objectid = Administrative_Details.objectid; 
+
+Q4 View: Crimes by Legal Code Section 
+
+CREATE VIEW Crimes_By_Code_Section AS 
+SELECT Administrative_Details.code_section, COUNT(*) AS crime_count 
+FROM Administrative_Details 
+JOIN Crime_Details ON Administrative_Details.objectid = Crime_Details.objectid 
+GROUP BY Administrative_Details.code_section 
+ORDER BY crime_count DESC;
+
+
+Category 6: Geocoding and Division  
+
+Q1. How does the crime count differ between matched (M), unmatched (U), and 
+tentative (T) geocode statuses across all divisions? 
+
+SELECT geocode_status, COUNT(*) AS total_crime_count 
+FROM Geocode_Info 
+GROUP BY geocode_status 
+ORDER BY total_crime_count DESC; 
+
+Q2. What is the geocoding status of crimes in each division? 
+
+SELECT division, geocode_status, COUNT(*) AS crime_count 
+FROM Location 
+INNER JOIN Geocode_Info  
+ON Location.objectid = Geocode_Info.objectid 
+GROUP BY division, geocode_status 
+ORDER BY crime_count DESC;
+
+Q3. Which divisions have the highest proportion of unmatched ("U") or tentative 
+("T") geocoding statuses? 
+
+SELECT division, SUM(CASE WHEN geocode_status = 'U' THEN 1 ELSE 0 END) * 100.0 / 
+COUNT(*) AS unmatched_percentage, SUM(CASE WHEN geocode_status = 'T' THEN 1 ELSE 0 
+END) * 100.0 / COUNT(*) AS tentative_percentage 
+FROM Geocode_Info 
+INNER JOIN Location 
+ON Location.objectid=Geocode_Info.objectid 
+GROUP BY division 
+ORDER BY unmatched_percentage DESC, tentative_percentage DESC;  
+
+Q4 View: Crimes Count By Geocode Status 
+
+CREATE VIEW Crime_Count_By_Geocode_Status AS 
+SELECT division, geocode_status, COUNT(*) AS crime_count 
+FROM Location 
+INNER JOIN Geocode_Info  
+ON Location.objectid = Geocode_Info.objectid 
+GROUP BY division, geocode_status 
+ORDER BY crime_count DESC; 
+
+
+
+
+
